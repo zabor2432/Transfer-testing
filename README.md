@@ -1,7 +1,20 @@
 # Transfer Testing
 
+#### Getting started
 
-Roadmap (WIP, ugly, it's a draft):
+First you need to have PDM installed, run this command:
+
+Linux/Mac `curl -sSL https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py | python3 -`
+Windows `(Invoke-WebRequest -Uri https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py -UseBasicParsing).Content | python -`
+
+Now simply install dependencies by running
+
+`pdm install`
+
+And you are ready to go :) venv is created in working folder in .venv in case you need to setup your IDE.
+
+
+#### Roadmap (WIP, ugly, it's a draft):
 
 - [ ]  Basic deep learning CV model in PyTorch with easy setup
 - [ ]  Dataloaders for Imagenet (Or any image classification data)
