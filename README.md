@@ -5,6 +5,7 @@
 First you need to have PDM installed, run this command:
 
 Linux/Mac `curl -sSL https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py | python3 -`
+
 Windows `(Invoke-WebRequest -Uri https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py -UseBasicParsing).Content | python -`
 
 Now simply install dependencies by running
