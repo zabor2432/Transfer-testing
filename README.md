@@ -15,6 +15,17 @@ Now simply install dependencies by running
 And you are ready to go :) venv is created in working folder in .venv in case you need to setup your IDE.
 
 
+#### Downloading datasets
+
+You need to have Kaggle API Token
+
+Just run:
+
+`pdm run transfer-testing/utils/datasets.py`
+
+It's temporary, every dataset will be downloaded within lightning data module
+
+
 #### Roadmap (WIP, ugly, it's a draft):
 
 - [ ]  Basic deep learning CV model in PyTorch with easy setup
@@ -22,13 +33,10 @@ And you are ready to go :) venv is created in working folder in .venv in case yo
 - [ ]  Pipeline to support training and validating (Dagster?, DVC?)
 - [ ]  Metric server (MLFlow, WandB)
 - [ ]  Transfer testing pipeline setup, current idea, not validated yet, needs fixing:
-  - [ ]  Subset data from imagenet from one domain (for example: mammals) 
+  - [ ]  Subset data from imagenet from one domain (for example: mammals)
   - [ ]  Train CV model on Imagenet - Training dataset: original augmented, Validation dataset: original augmented, Test dataset: original
   - [ ]  Check for test error
   - [ ]  Subset new classes from similar domain (for example birds)
   - [ ]  Retrain model on small part of that classes (10% of birds)
   - [ ]  Hypothesis: test error on rest of the dataset for similar dataset should be small or similar to test error from original dataset, that is model trained on similar data should generalize on unseen data with being presented only subset of new classes (or examples, we need to check this) during training
 - [ ]  Check how we can utilize approaches from cited articles
-
-
-
