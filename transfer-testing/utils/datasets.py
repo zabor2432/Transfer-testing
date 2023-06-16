@@ -1,6 +1,6 @@
 import argparse
 import os
-from anyio import Path
+from pathlib import Path
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 parser = argparse.ArgumentParser(description="Fetch Kaggle datasets")
