@@ -1,0 +1,6 @@
+{
+  "train_f1_score": 0.944,
+  "val_f1_score": 0.938,
+  "test_f1_score": 0.83,
+  "test_loss": 0.509
+}
