@@ -1,0 +1,7 @@
+{
+  "train_f1_score": 0.00046,
+  "val_f1_score": 1e-05,
+  "correctPreds": 0,
+  "incorrectPreds": 20,
+  "correctPredsPerc": 0.0
+}

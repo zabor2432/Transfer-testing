@@ -1,5 +1,15 @@
 # Transfer Testing
 
+#### Running a test on data-small
+
+- Download data-small from /local_storage/gwo/public/transfer-testing/imagenet/data-small located on sanna server to your home dir
+- Run testSplitter.py to split prechosen class into 20 test samples 5 val samples and tempDir
+- Run smallDataTest.py with args defining path to data-small in your home-dir and what % of tempDir do you want to add to train set
+- Results are saved in small_data_results directory in the form of json file
+
+Sidenote: in order to keep the results actually meaningful there should be no fine tuning, an architecture (optimally one that is widely known and covered in papers) and a set of hyperparameters should be decided on and kept constant.
+The reason for that is we want to eliminate as many moving parts as possible and focus on impact of the thing we actually want to research.
+
 #### Getting started
 
 First you need to have PDM installed, run this command:
