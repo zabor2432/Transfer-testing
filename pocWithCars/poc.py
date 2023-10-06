@@ -10,10 +10,10 @@ from math import ceil
 from typing import Tuple
 
 import tensorflow as tf
-from tensorflow.keras.applications import  #ResNet50
+# from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
-from Conv_2_model import Conv_2
+from Conv_2_model_keras import Conv_2
 
 TESTED_SUBDIR_PATH = "TT_DB/white"
 DEST_PATH = "data"
