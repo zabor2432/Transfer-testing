@@ -10,9 +10,10 @@ from math import ceil
 from typing import Tuple
 
 import tensorflow as tf
-from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.applications import  #ResNet50
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
+from Conv_2_model import Conv_2
 
 TESTED_SUBDIR_PATH = "TT_DB/white"
 DEST_PATH = "data"
@@ -126,7 +127,8 @@ def getModel(inputShape: Tuple, numClasses: int):
     Returns:
         a tf model
     """
-    baseModel = ResNet50(weights="imagenet", include_top=False, input_shape=inputShape)
+    # baseModel = ResNet50(weights="imagenet", include_top=False, input_shape=inputShape)
+    baseModel = Conv_2(weights="imagenet", include_top=False, input_shape=inputShape)
 
     x = GlobalAveragePooling2D()(baseModel.output)
     x = Dense(258)(x)
