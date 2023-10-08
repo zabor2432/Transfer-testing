@@ -145,14 +145,6 @@ def getModel(inputShape: Tuple, numClasses: int):
         tf.keras.layers.Dense(256, activation="relu"),
         tf.keras.layers.Dense(numClasses, activation = "softmax")
     ])
-    # baseModel = ResNet50(weights="imagenet", include_top=False, input_shape=inputShape)
-
-    # x = GlobalAveragePooling2D()(baseModel.output)
-    # x = Dense(258)(x)
-
-    # output = Dense(numClasses, activation="softmax")(x)
-
-    # model = Model(inputs=baseModel.input, outputs=output)
 
     return model
 

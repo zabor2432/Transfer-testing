@@ -11,19 +11,21 @@ from typing import Tuple
 
 import tensorflow as tf
 from tensorflow.keras.applications import ResNet50
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Conv2D
 from tensorflow.keras.models import Model
 
 TEST_CLASS_NAME = "n04579145"
 
 BATCH_SIZE = 8
-INPUT_SHAPE = (300,300,3)
+INPUT_SHAPE = (64,64,3)
 NUM_CLASSES = 1000
-EPOCHS = 5
+EPOCHS = 20
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def resize_image(image, label):
     # Resize the image to the desired dimensions
-    resized_image = tf.image.resize(image, (300, 300))
+    resized_image = tf.image.resize(image, (64, 64))
     return resized_image, label
 
 def preprocessVariableSet(usedPercentage: float, dbPath: str):
@@ -72,7 +74,7 @@ def getLoaders(dbPath: str):
         labels='inferred',
         label_mode='categorical',
         batch_size=BATCH_SIZE,
-        image_size=(300, 300),
+        image_size=(64, 64),
         shuffle=True,
         seed=321
     )
@@ -84,7 +86,7 @@ def getLoaders(dbPath: str):
         labels='inferred',
         label_mode='categorical',
         batch_size=BATCH_SIZE,
-        image_size=(300, 300),
+        image_size=(64, 64),
         shuffle=False
     )
 
@@ -95,7 +97,7 @@ def getLoaders(dbPath: str):
         labels='inferred',
         label_mode='categorical',
         batch_size=BATCH_SIZE,
-        image_size=(300, 300),
+        image_size=(64, 64),
         shuffle=False
     )
 
@@ -118,14 +120,14 @@ def getModel(inputShape: Tuple, numClasses: int):
     Returns:
         a tf model
     """
-    baseModel = ResNet50(weights="imagenet", include_top=False, input_shape=inputShape)
-
-    x = GlobalAveragePooling2D()(baseModel.output)
-    x = Dense(2048)(x)
-
-    output = Dense(numClasses, activation="softmax")(x)
-
-    model = Model(inputs=baseModel.input, outputs=output)
+    model = tf.keras.Sequential([
+        Conv2D(64, (3,3), padding="same", activation="relu", input_shape=inputShape),
+        Conv2D(64, (3,3), padding="same", activation="relu"),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(256, activation="relu"),
+        tf.keras.layers.Dense(256, activation="relu"),
+        tf.keras.layers.Dense(numClasses, activation = "softmax")
+    ])
 
     return model
 
@@ -136,7 +138,7 @@ if __name__ == "__main__":
     parser.add_argument('--testedDataShare', dest='testedDataShare', type=float, default=0.1,
                         help="what percentage of tested subset should be added to train and val splits")
     
-    parser.add_argument("--dbPath", dest="dbPath", type=str, default="data-small",
+    parser.add_argument("--dbPath", dest="dbPath", type=str, default="/home/macierz/s177788/projektBadawczy/data-small",
                         help="Path to dir with raw subset we are interested in")
     
     args = parser.parse_args()
@@ -158,7 +160,9 @@ if __name__ == "__main__":
         shutil.rmtree(modelsPath)
     os.makedirs(modelsPath)
 
-    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=[tf.keras.metrics.F1Score(average="macro")])
+    opt = tf.keras.optimizers.Adam(learning_rate=0.001)
+
+    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=[tf.keras.metrics.F1Score(average="macro")])
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=os.path.join(modelsPath, 'model_epoch{epoch:02d}.h5'),
         monitor='val_f1score',
@@ -168,8 +172,8 @@ if __name__ == "__main__":
     )
 
     epochs = EPOCHS
-    with tf.device("GPU:0"):
-        history = model.fit(trainDataset, epochs=epochs, validation_data=valDataset, callbacks=[checkpoint_callback])
+    # with tf.device("GPU:1"):
+    history = model.fit(trainDataset, epochs=epochs, validation_data=valDataset, callbacks=[checkpoint_callback])
 
     train_f1_scores = history.history['f1_score']
     val_f1_scores = history.history['val_f1_score']
@@ -181,8 +185,8 @@ if __name__ == "__main__":
         # if something goes wrong just use current model
         best_model = model
 
-    with tf.device("GPU:0"):
-        predictions = model.predict(testDataset)
+    # with tf.device("GPU:1"):
+    predictions = model.predict(testDataset)
 
     correctPreds = 0
     incorrectPreds = 0
