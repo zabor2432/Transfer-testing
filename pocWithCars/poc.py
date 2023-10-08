@@ -17,7 +17,7 @@ from tensorflow.keras.models import Model
 TESTED_SUBDIR_PATH = "TT_DB/white"
 DEST_PATH = "data"
 
-BATCH_SIZE = 8
+BATCH_SIZE = 32
 INPUT_SHAPE = (64,64,3)
 NUM_CLASSES = 4
 EPOCHS = 20
@@ -143,7 +143,7 @@ def getModel(inputShape: Tuple, numClasses: int):
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(256, activation="relu"),
         tf.keras.layers.Dense(256, activation="relu"),
-        tf.keras.layers.Dense(numClasses)
+        tf.keras.layers.Dense(numClasses, activation = "softmax")
     ])
     # baseModel = ResNet50(weights="imagenet", include_top=False, input_shape=inputShape)
 
@@ -173,15 +173,17 @@ if __name__ == "__main__":
     trainDataset, valDataset, testDataset = getLoaders(os.path.join(args.dbPath, "data"))
 
     model = getModel(INPUT_SHAPE, NUM_CLASSES)
-    import pdb; pdb.set_trace()
-    modelsPath = os.path.join(os.getcwd(), "models")
+
+    modelsPath = os.path.join(os.getcwd(), "models", f"test_share{args.testedDataShare}")
     if os.path.exists(modelsPath):
         shutil.rmtree(modelsPath)
     os.makedirs(modelsPath)
 
-    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=[tf.keras.metrics.F1Score(average="macro")])
+    opt = tf.keras.optimizers.Adam(learning_rate=0.001)
+
+    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=[tf.keras.metrics.F1Score(average="macro")])
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=os.path.join(modelsPath, 'model_epoch{epoch:02d}_{args.testedDataShare}%.h5'),
+        filepath=os.path.join(modelsPath, 'model_epoch{epoch:02d}.h5'),
         monitor='val_f1score',
         save_best_only=False,
         mode='max',
