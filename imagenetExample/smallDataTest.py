@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
     model = getModel(INPUT_SHAPE, NUM_CLASSES)
 
-    modelsPath = os.path.join(os.getcwd(), "models")
+    modelsPath = os.path.join(os.getcwd(), "models", f"test_share{args.testedDataShare}")
     if os.path.exists(modelsPath):
         shutil.rmtree(modelsPath)
     os.makedirs(modelsPath)
