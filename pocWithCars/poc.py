@@ -11,16 +11,21 @@ from typing import Tuple
 
 import tensorflow as tf
 from tensorflow.keras.applications import ResNet50
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Conv2D
 from tensorflow.keras.models import Model
 
 TESTED_SUBDIR_PATH = "TT_DB/white"
 DEST_PATH = "data"
 
 BATCH_SIZE = 8
-INPUT_SHAPE = (300,300,3)
+INPUT_SHAPE = (64,64,3)
 NUM_CLASSES = 4
-EPOCHS = 5
+EPOCHS = 20
+
+def resize_image(image, label):
+    # Resize the image to the desired dimensions
+    resized_image = tf.image.resize(image, (64, 64))
+    return resized_image, label
 
 def preprocessVariableSet(usedPercentage: float, dbPath: str):
     """
@@ -91,6 +96,8 @@ def getLoaders(dbPath: str):
         seed=321
     )
 
+    train_dataset = train_dataset.map(resize_image)
+
     val_dataset = tf.keras.utils.image_dataset_from_directory(
         valDir,
         labels='inferred',
@@ -100,6 +107,8 @@ def getLoaders(dbPath: str):
         shuffle=False
     )
 
+    val_dataset = val_dataset.map(resize_image)
+
     test_dataset = tf.keras.utils.image_dataset_from_directory(
         testDir,
         labels='inferred',
@@ -108,6 +117,8 @@ def getLoaders(dbPath: str):
         image_size=(300, 300),
         shuffle=False
     )
+
+    test_dataset = test_dataset.map(resize_image)
 
     train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
     val_dataset = val_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
@@ -126,14 +137,22 @@ def getModel(inputShape: Tuple, numClasses: int):
     Returns:
         a tf model
     """
-    baseModel = ResNet50(weights="imagenet", include_top=False, input_shape=inputShape)
+    model = tf.keras.Sequential([
+        Conv2D(64, (3,3), padding="same", activation="relu", input_shape=inputShape),
+        Conv2D(64, (3,3), padding="same", activation="relu"),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(256, activation="relu"),
+        tf.keras.layers.Dense(256, activation="relu"),
+        tf.keras.layers.Dense(numClasses)
+    ])
+    # baseModel = ResNet50(weights="imagenet", include_top=False, input_shape=inputShape)
 
-    x = GlobalAveragePooling2D()(baseModel.output)
-    x = Dense(258)(x)
+    # x = GlobalAveragePooling2D()(baseModel.output)
+    # x = Dense(258)(x)
 
-    output = Dense(numClasses, activation="softmax")(x)
+    # output = Dense(numClasses, activation="softmax")(x)
 
-    model = Model(inputs=baseModel.input, outputs=output)
+    # model = Model(inputs=baseModel.input, outputs=output)
 
     return model
 
@@ -154,7 +173,7 @@ if __name__ == "__main__":
     trainDataset, valDataset, testDataset = getLoaders(os.path.join(args.dbPath, "data"))
 
     model = getModel(INPUT_SHAPE, NUM_CLASSES)
-
+    import pdb; pdb.set_trace()
     modelsPath = os.path.join(os.getcwd(), "models")
     if os.path.exists(modelsPath):
         shutil.rmtree(modelsPath)
@@ -162,7 +181,7 @@ if __name__ == "__main__":
 
     model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=[tf.keras.metrics.F1Score(average="macro")])
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=os.path.join(modelsPath, 'model_epoch{epoch:02d}.h5'),
+        filepath=os.path.join(modelsPath, 'model_epoch{epoch:02d}_{args.testedDataShare}%.h5'),
         monitor='val_f1score',
         save_best_only=False,
         mode='max',
