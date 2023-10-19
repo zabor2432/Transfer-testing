@@ -10,6 +10,7 @@ def transform_data_structure(source_dir, target_dir):
     os.makedirs(os.path.join(target_dir, 'train'), exist_ok=True)
     os.makedirs(os.path.join(target_dir, 'val'), exist_ok=True)
     os.makedirs(os.path.join(target_dir, 'test'), exist_ok=True)
+    os.makedirs(os.path.join(target_dir, 'testTT'), exist_ok=True)
 
     class_folders = [folder for folder in os.listdir(source_dir) if os.path.isdir(os.path.join(source_dir, folder))]
 
@@ -23,9 +24,9 @@ def transform_data_structure(source_dir, target_dir):
 
         train_split = int(0.6 * num_images)
         val_split = int(0.2 * num_images)
-        test_split = int(0.2 * num_images)  # Smaller test set
+        test_split = int(0.2 * num_images)  # Smaller test set 
 
-        all_images = images[:train_split + val_split + test_split]
+        all_images = images[:train_split + val_split + test_split] # List slicing, [od:do:krok (def 1)]
 
         random.shuffle(all_images)  # Shuffle the images
 
@@ -40,22 +41,35 @@ def transform_data_structure(source_dir, target_dir):
             for img in tqdm(train_images):
                 shutil.copy2(os.path.join(class_path, img), class_target_dir)
 
-            class_target_dir = os.path.join(target_dir, 'val', class_folder)
+            class_target_dir = os.path.join(target_dir, 'test', class_folder)
             os.makedirs(class_target_dir, exist_ok=True)
-            print(f"preparing data for val split for {class_folder} subset")
-            for img in tqdm(val_images):
+            print(f"preparing data for test split for {class_folder} subset")
+            for img in tqdm(test_images):
                 shutil.copy2(os.path.join(class_path, img), class_target_dir)
 
-        class_target_dir = os.path.join(target_dir, 'test', class_folder)
+            os.makedirs(os.path.join(target_dir, 'testTT', class_folder), exist_ok=True)
+
+        class_target_dir = os.path.join(target_dir, 'val', class_folder)
         os.makedirs(class_target_dir, exist_ok=True)
-        print(f"preparing data for test split for {class_folder} subset")
-        for img in tqdm(test_images):
+        print(f"preparing data for val split for {class_folder} subset")
+        for img in tqdm(val_images):
             shutil.copy2(os.path.join(class_path, img), class_target_dir)
+
+        if class_folder == "white":
+            class_target_dir = os.path.join(target_dir, 'testTT', class_folder)
+            os.makedirs(class_target_dir, exist_ok=True)
+            print(f"preparing data for test split for {class_folder} subset")
+            for img in tqdm(test_images):
+                shutil.copy2(os.path.join(class_path, img), class_target_dir)
+            
+            os.makedirs(os.path.join(target_dir, 'test', class_folder), exist_ok=True)
+
+        
 
 
 if __name__ == "__main__":
     random.seed(2137)
 
-    source_directory = "/home/macierz/s177788/projektBadawczy/pocWithCars/Transfer_testing_db/TT_DB"  # Update this to your source directory
+    source_directory = "/home/macierz/s177788/projektBadawczy/Transfer-testing/pocWithCars/Transfer_testing_db/TT_DB"  # Update this to your source directory
     target_directory = "data"  # Update this to your desired target directory
     transform_data_structure(source_directory, target_directory)

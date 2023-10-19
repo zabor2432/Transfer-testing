@@ -20,7 +20,7 @@ DEST_PATH = "data"
 BATCH_SIZE = 32
 INPUT_SHAPE = (64,64,3)
 NUM_CLASSES = 4
-EPOCHS = 20
+EPOCHS = 10
 
 def resize_image(image, label):
     # Resize the image to the desired dimensions
@@ -29,7 +29,7 @@ def resize_image(image, label):
 
 def preprocessVariableSet(usedPercentage: float, dbPath: str):
     """
-    Function that takes makes changes to the dataset based on args
+    Function that makes changes to the dataset based on args
 
     Args:
         usedPercentage: what percentage of tested subset should be used in this experiment
@@ -37,16 +37,11 @@ def preprocessVariableSet(usedPercentage: float, dbPath: str):
     """
     sourcePath = os.path.join(dbPath, TESTED_SUBDIR_PATH)
     trainPath = os.path.join(dbPath, DEST_PATH, "train", "white")
-    valPath = os.path.join(dbPath, DEST_PATH, "val", "white")
 
     if os.path.exists(trainPath):
-        shutil.rmtree(trainPath)
-
-    if os.path.exists(valPath):
-        shutil.rmtree(valPath)
+        shutil.rmtree(trainPath)   
 
     os.makedirs(trainPath)
-    os.makedirs(valPath)
 
     images = [img for img in os.listdir(sourcePath) if img.lower().endswith(('.jpg', '.jpeg', '.png'))]
     num_images = len(images)
@@ -62,13 +57,10 @@ def preprocessVariableSet(usedPercentage: float, dbPath: str):
     random.shuffle(all_images)  # Shuffle the images
 
     train_images = all_images[:ceil(train_split*usedPercentage)]
-    val_images = all_images[ceil(train_split*usedPercentage):ceil(train_split*usedPercentage) + ceil(val_split*usedPercentage)]
 
     for img in tqdm(train_images):
         shutil.copy2(os.path.join(sourcePath, img), trainPath)
 
-    for img in tqdm(val_images):
-        shutil.copy2(os.path.join(sourcePath, img), valPath)
 
 def getLoaders(dbPath: str):
     """
@@ -81,10 +73,12 @@ def getLoaders(dbPath: str):
         - dataset object for train split
         - dataset object for val split
         - dataset object for test split
+        - dataset object for testTT split
     """
     trainDir = os.path.join(dbPath, "train")
     valDir = os.path.join(dbPath, "val")
     testDir = os.path.join(dbPath, "test")
+    testTTDir = os.path.join(dbPath, "testTT")
 
     train_dataset = tf.keras.utils.image_dataset_from_directory(
         trainDir,
@@ -120,11 +114,23 @@ def getLoaders(dbPath: str):
 
     test_dataset = test_dataset.map(resize_image)
 
+    testTT_dataset = tf.keras.utils.image_dataset_from_directory(
+        testTTDir,
+        labels='inferred',
+        label_mode='categorical',
+        batch_size=BATCH_SIZE,
+        image_size=(300, 300),
+        shuffle=False
+    )
+
+    testTT_dataset = testTT_dataset.map(resize_image)
+
     train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
     val_dataset = val_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
     test_dataset = test_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+    testTT_dataset = testTT_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
 
-    return train_dataset, val_dataset, test_dataset
+    return train_dataset, val_dataset, test_dataset, testTT_dataset
 
 def getModel(inputShape: Tuple, numClasses: int):
     """
@@ -162,7 +168,7 @@ if __name__ == "__main__":
 
     preprocessVariableSet(args.testedDataShare, args.dbPath)
 
-    trainDataset, valDataset, testDataset = getLoaders(os.path.join(args.dbPath, "data"))
+    trainDataset, valDataset, testDataset, testTTDataset = getLoaders(os.path.join(args.dbPath, "data"))
 
     model = getModel(INPUT_SHAPE, NUM_CLASSES)
 
@@ -179,7 +185,8 @@ if __name__ == "__main__":
         monitor='val_f1score',
         save_best_only=False,
         mode='max',
-        verbose=1
+        verbose=1,
+        #period=5
     )
 
     epochs = EPOCHS
@@ -194,6 +201,7 @@ if __name__ == "__main__":
 
     with tf.device("GPU:0"):
         test_loss, test_f1_score = best_model.evaluate(testDataset)
+        testTT_loss, testTT_f1_score = best_model.evaluate(testTTDataset)
 
     metricsPath = os.path.join(os.getcwd(), "results")
     os.makedirs(metricsPath, exist_ok=True)
@@ -202,7 +210,9 @@ if __name__ == "__main__":
         "train_f1_score": round(train_f1_scores[best_epoch],3),
         "val_f1_score": round(val_f1_scores[best_epoch],3),
         "test_f1_score": round(test_f1_score,3),
-        "test_loss": round(test_loss,3)
+        "test_loss": round(test_loss,3),
+        "testTT_f1_score": round(testTT_f1_score,3),
+        "testTT_loss": round(testTT_loss,3)
     }
 
     jsonPath = os.path.join(metricsPath, f"testSplit{args.testedDataShare}.json")
